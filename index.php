@@ -55,10 +55,13 @@
 
         // Execute the cURL session and get the API response
         $response = curl_exec($ch);
+        $posts = json_decode($response, true);
 
         // Check for errors
         if (curl_errno($ch)) {
-            echo 'Error: ' . curl_error($ch);
+            die('Error: ' . curl_error($ch).PHP_EOL);
+        }elseif(isset($posts['code'])){
+            die($posts['message'].PHP_EOL);
         }
 
         // Close cURL session
@@ -66,7 +69,6 @@
 
         // Process the API response (in JSON format)
         if ($response) {
-            $posts = json_decode($response, true);
 
             // process this batch of posts
             $i=0;
@@ -105,28 +107,28 @@
                 $pdf->WriteHTML($html);
 
                 // grab any categories and tags
-                $tax = $posts[$i][_embedded]['wp:term'];
+                $tax = $posts[$i]['_embedded']['wp:term'];
                 $cat = '';
                 $tag = '';
                 $j = 0;
                 while ($j<count($tax)){
 
-                    $tmp = $posts[$i][_embedded]['wp:term'][$j];
+                    $tmp = $posts[$i]['_embedded']['wp:term'][$j];
 
                     $k = 0;
                     while ($k<count($tmp)){
 
-                        if ($posts[$i][_embedded]['wp:term'][$j][$k][taxonomy] == 'category'){
+                        if ($posts[$i]['_embedded']['wp:term'][$j][$k]['taxonomy'] == 'category'){
                             if (empty($cat)){
-                                $cat = $posts[$i][_embedded]['wp:term'][$j][$k][name];
+                                $cat = $posts[$i]['_embedded']['wp:term'][$j][$k]['name'];
                             }else{
-                                $cat .= ', '.$posts[$i][_embedded]['wp:term'][$j][$k][name];
+                                $cat .= ', '.$posts[$i]['_embedded']['wp:term'][$j][$k]['name'];
                             }
-                        }elseif($posts[$i][_embedded]['wp:term'][$j][$k][taxonomy] == 'post_tag'){
+                        }elseif($posts[$i]['_embedded']['wp:term'][$j][$k]['taxonomy'] == 'post_tag'){
                             if (empty($tag)){
-                                $tag = $posts[$i][_embedded]['wp:term'][$j][$k][name];
+                                $tag = $posts[$i]['_embedded']['wp:term'][$j][$k]['name'];
                             }else{
-                                $tag .= ', '.$posts[$i][_embedded]['wp:term'][$j][$k][name];
+                                $tag .= ', '.$posts[$i]['_embedded']['wp:term'][$j][$k]['name'];
                             }
                         }
                         $k++;
