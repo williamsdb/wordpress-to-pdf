@@ -60,8 +60,10 @@
         // Check for errors
         if (curl_errno($ch)) {
             die('Error: ' . curl_error($ch).PHP_EOL);
+            unlink($argv[4].'/'.$date.'.pdf');
         }elseif(isset($posts['code'])){
             die($posts['message'].PHP_EOL);
+            unlink($argv[4].'/'.$date.'.pdf');
         }
 
         // Close cURL session
