@@ -1,5 +1,20 @@
 <?php
 
+/**
+ * fpdfexts.php
+ *
+ * Scan through all posts on a site and output them to a PDF file.
+ *
+ * @author     Neil Thompson <neil@spokenlikeageek.com>
+ * @copyright  2023 Neil Thompson
+ * @license    https://www.gnu.org/licenses/gpl-3.0.en.html  GNU General Public License v3.0
+ * @link       https://github.com/williamsdb/wordpress-to-pdf
+ * @see        https://www.spokenlikeageek.com/2023/08/02/exporting-all-wordpress-posts-to-pdf/ Blog post
+ * @see        http://www.fpdf.org/ FPDF library
+ * @see        http://www.fpdf.org/en/tutorial/tuto6.htm FDPF HTML output
+ * @see        http://www.fpdf.org/en/script/script76.php FPDF memory optimisation
+ */
+
 class PDF extends FPDF
 {
     protected $B = 0;

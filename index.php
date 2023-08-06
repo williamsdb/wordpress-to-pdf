@@ -1,5 +1,17 @@
 <?php
 
+    /**
+     * index.php
+     *
+     * Scan through all posts on a site and output them to a PDF file.
+     *
+     * @author     Neil Thompson <neil@spokenlikeageek.com>
+     * @copyright  2023 Neil Thompson
+     * @license    https://www.gnu.org/licenses/gpl-3.0.en.html  GNU General Public License v3.0
+     * @link       https://github.com/williamsdb/wordpress-to-pdf
+     * @see        https://www.spokenlikeageek.com/2023/08/02/exporting-all-wordpress-posts-to-pdf/ Blog post
+     */
+
     // check we have what we need
     if ($argc != 5) die('Insufficient parameters passed in'.PHP_EOL);
 
