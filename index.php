@@ -10,10 +10,22 @@
      * @license    https://www.gnu.org/licenses/gpl-3.0.en.html  GNU General Public License v3.0
      * @link       https://github.com/williamsdb/wordpress-to-pdf
      * @see        https://www.spokenlikeageek.com/2023/08/02/exporting-all-wordpress-posts-to-pdf/ Blog post
+     * 
+     * ARGUMENTS
+     * URL         Full web address of site to be processed (without trailing slash)
+     * Username    WordPress username to use to retrieve posts
+     * Password    WordPress application password
+     * Output Loc  Location where you would like the output PDF file to be put
+     * Sort Order  Process posts old to new (ASC) or new to old (DESC) - optional, ASC default  
+     * Break point Number of posts to process before stopping - optional, leave blank for all
+     *
      */
 
+    // turn off reporting of notices
+     error_reporting(E_ALL & ~E_NOTICE);
+    
     // check we have what we need
-    if ($argc != 5) die('Insufficient parameters passed in'.PHP_EOL);
+    if ($argc < 5) die('Insufficient parameters passed in'.PHP_EOL);
 
     // load fpdf
     require('fpdf/fpdf.php');
@@ -27,7 +39,18 @@
     $password = $argv[3];
 
     // Order to output posts (asc or desc)
-    $order = 'asc';
+    if (isset($argv[5])){
+        $order = $argv[5];
+    }else{
+        $order = 'asc';
+    }
+
+    // number of posts to process
+    if (isset($argv[6])){
+        $cnt = $argv[6];
+    }else{
+        $cnt = 9999999;
+    }
 
     // API endpoint to retrieve posts
     $api_url = $site_url . '/wp-json/wp/v2/';
@@ -51,6 +74,7 @@
 
     // set pagination
     $page = 1;
+    $postCount = 0;
     $finished = 0;
 
     while ($finished==0){
@@ -65,11 +89,38 @@
         // Set cURL option to return the response instead of outputting it directly
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
+        // if this is the first time through get the total number of posts to be processed
+        if ($page == 1){
+            // this function is called by curl for each header received
+            curl_setopt($ch, CURLOPT_HEADERFUNCTION,
+            function($curl, $header) use (&$headers)
+            {
+                $len = strlen($header);
+                $header = explode(':', $header, 2);
+                if (count($header) < 2) // ignore invalid headers
+                return $len;
+        
+                $headers[strtolower(trim($header[0]))][] = trim($header[1]);
+                
+                return $len;
+            }
+            );    
+        }
+
         // Execute the cURL session and get the API response
         $response = curl_exec($ch);
+        if ($page == 1){
+            $totalPages = $headers['x-wp-total'][0];
+            if ($cnt == 9999999) $cnt = $totalPages-1;
+        }
         $posts = json_decode($response, true);
-
+       
         // Check for errors
+        $info = curl_getinfo($ch);
+        
+        if ($info['http_code'] != '200') {
+            die("Error retrieving posts ");
+        }
         if (curl_errno($ch)) {
             die('Error: ' . curl_error($ch).PHP_EOL);
             unlink($argv[4].'/'.$date.'.pdf');
@@ -83,7 +134,6 @@
 
         // Process the API response (in JSON format)
         if ($response) {
-
             // process this batch of posts
             $i=0;
             while ($i<count($posts)){
@@ -106,7 +156,7 @@
 
                 // process featured image and write body
                 if (!empty($posts[$i]['jetpack_featured_media_url'])){
-                    $ret = getimagesize($posts[$i]['jetpack_featured_media_url']);
+                    $ret = getimagesize(strtok($posts[$i]['jetpack_featured_media_url'],'?'));
                     if ($ret !== false){
                         $width = 190;
                         $height = $ret[1]/($ret[0]/$width);
@@ -116,7 +166,7 @@
                         $pdf->SetY(10);
                     }
                 }
-                $html = '<p>'.iconv('UTF-8', 'windows-1252', html_entity_decode($posts[$i]['content']['rendered'])).'<p>';
+                $html = '<p>'.iconv('UTF-8', 'windows-1252//TRANSLIT', html_entity_decode($posts[$i]['content']['rendered'])).'<p>';
                 $pdf->SetFontSize(12);
                 $pdf->WriteHTML($html);
 
@@ -160,7 +210,8 @@
                 $pdf->WriteHTML($html);
 
                 // echo out so show we are actually doing something!
-                echo '.';
+                $postCount++;
+                echo chr(27) . "[0G".$postCount.'/'.$totalPages." posts processed";
 
                 $i++;
             }
@@ -168,8 +219,8 @@
             echo 'No response from the API.';
         }
 
-
-        if (count($posts)<10){
+        // check to see if we have processed all posts we want
+        if ($postCount>$cnt){
             $finished = 1;
         }else{
             $page++;

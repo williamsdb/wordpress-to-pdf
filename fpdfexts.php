@@ -21,6 +21,9 @@ class PDF extends FPDF
     protected $I = 0;
     protected $U = 0;
     protected $HREF = '';
+    protected $LI = 0;
+    protected $OL = 0;
+    protected $FIG = 0;
 
     protected $f;
 
@@ -175,6 +178,16 @@ class PDF extends FPDF
                 // Text
                 if($this->HREF)
                     $this->PutLink($this->HREF,$e);
+                elseif($this->LI && $this->OL==0){
+                    $this->Write(5,"- ".$e);
+                }
+                elseif($this->LI && $this->OL>0){
+                    $this->Write(5,$this->OL.'. '.$e);
+                    $this->OL++;
+                }
+                elseif($this->FIG){
+                    //do nothing
+                }
                 else
                     $this->Write(5,$e);
             }
@@ -205,12 +218,27 @@ class PDF extends FPDF
         // Opening tag
         if($tag=='B' || $tag=='I' || $tag=='U')
             $this->SetStyle($tag,true);
-        if($tag=='A')
+        if($tag=='A' && isset($attr['HREF']))
             $this->HREF = $attr['HREF'];
         if($tag=='BR')
             $this->Ln(5);
         if($tag=='P')
             $this->Ln(8);
+        if($tag=='H1'||$tag=='H2'||$tag=='H3'){
+            $this->Ln(8);
+            $this->SetStyle("B",true);
+        }
+        if($tag=='LI'){
+            $this->Ln(5);
+            $this->LI = 1;
+        }
+        if($tag=='OL'){
+            $this->Ln(5);
+            $this->OL = 1;
+        }
+        if($tag=='FIGCAPTION'){
+            $this->FIG = 1;
+        }
     }
 
     function CloseTag($tag)
@@ -220,6 +248,18 @@ class PDF extends FPDF
             $this->SetStyle($tag,false);
         if($tag=='A')
             $this->HREF = '';
+        if($tag=='H1'||$tag=='H2'||$tag=='H3'){
+            $this->SetStyle("B",false);
+        }
+        if($tag=='LI'){
+            $this->LI = 0;
+        }    
+        if($tag=='OL'){
+            $this->OL = 0;
+        }    
+        if($tag=='FIGCAPTION'){
+            $this->FIG = 0;
+        }
     }
 
     function SetStyle($tag, $enable)
