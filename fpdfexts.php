@@ -24,6 +24,7 @@ class PDF extends FPDF
     protected $LI = 0;
     protected $OL = 0;
     protected $FIG = 0;
+    protected $PRE = 0;
 
     protected $f;
 
@@ -239,6 +240,13 @@ class PDF extends FPDF
         if($tag=='FIGCAPTION'){
             $this->FIG = 1;
         }
+        if($tag=='PRE'){
+            $this->SetFont('Courier');
+            $this->SetFontSize(10);
+            $this->SetFillColor(211, 211, 211);
+            $this->Ln(8);
+            $this->PRE = 1;
+        }
     }
 
     function CloseTag($tag)
@@ -259,6 +267,13 @@ class PDF extends FPDF
         }    
         if($tag=='FIGCAPTION'){
             $this->FIG = 0;
+        }
+        if($tag=='PRE'){
+            $this->SetFont('Arial');
+            $this->SetFontSize(12);
+            $this->SetFillColor(255, 255, 255);
+            $this->Ln(8);
+            $this->PRE = 0;
         }
     }
 

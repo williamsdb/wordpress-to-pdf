@@ -166,7 +166,7 @@
                         $pdf->SetY(10);
                     }
                 }
-                $html = '<p>'.iconv('UTF-8', 'windows-1252//TRANSLIT', html_entity_decode($posts[$i]['content']['rendered'])).'<p>';
+                $html = '<p>'.iconv('UTF-8', 'windows-1252//TRANSLIT', html_entity_decode_exclude_pre($posts[$i]['content']['rendered'])).'<p>';
                 $pdf->SetFontSize(12);
                 $pdf->WriteHTML($html);
 
@@ -231,5 +231,30 @@
     // finalise the file
     echo PHP_EOL.'Writing output file'.PHP_EOL;
     $pdf->Output();
+
+    function html_entity_decode_exclude_pre($html) {
+        // Step 1: Extract content inside <pre> tags
+        $pre_pattern = '/<pre.*?>(.*?)<\/pre>/is';
+        preg_match_all($pre_pattern, $html, $pre_matches);
+        
+        // Step 2: Replace the <pre> content with placeholders and handle \r to \n replacement
+        $placeholders = [];
+        foreach ($pre_matches[0] as $index => $pre_block) {
+            $placeholder = "%%%PRE_PLACEHOLDER_{$index}%%%";
+            $pre_block_modified = html_entity_decode(str_replace(chr(10), "<br>", $pre_block), ENT_QUOTES | ENT_HTML401, 'UTF-8');
+            $placeholders[$placeholder] = $pre_block_modified;
+            $html = str_replace($pre_block, $placeholder, $html);
+        }
+        
+        // Step 3: Decode HTML entities in the remaining content
+        $html = html_entity_decode($html);
+    
+        // Step 4: Replace placeholders with the original (modified) <pre> content
+        foreach ($placeholders as $placeholder => $pre_block) {
+            $html = str_replace($placeholder, $pre_block, $html);
+        }
+        
+        return $html;
+    }
 
 ?>
