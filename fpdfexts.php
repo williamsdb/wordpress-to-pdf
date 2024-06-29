@@ -25,6 +25,7 @@ class PDF extends FPDF
     protected $OL = 0;
     protected $FIG = 0;
     protected $PRE = 0;
+    protected $BLOCKQUOTE = 0;
 
     protected $f;
 
@@ -174,41 +175,49 @@ class PDF extends FPDF
         $a = preg_split('/<(.*)>/U',$html,-1,PREG_SPLIT_DELIM_CAPTURE);
         foreach($a as $i=>$e)
         {
-            if($i%2==0)
-            {
-                // Text
-                if($this->HREF)
-                    $this->PutLink($this->HREF,$e);
-                elseif($this->LI && $this->OL==0){
-                    $this->Write(5,"- ".$e);
+            if($this->PRE==0 || ($this->PRE==1 && $this->CloseTag(strtoupper(substr($e,1))) == 'PRE')){
+                if($i%2==0)
+                {
+                    // Text
+                    if($this->HREF)
+                        $this->PutLink($this->HREF,$e);
+                    elseif($this->LI && $this->OL==0){
+                        $this->Write(5,"- ".$e);
+                    }
+                    elseif($this->LI && $this->OL>0){
+                        $this->Write(5,$this->OL.'. '.$e);
+                        $this->OL++;
+                    }
+                    elseif($this->FIG){
+                        //do nothing
+                    }
+                    else
+                        $this->Write(5,$e);
                 }
-                elseif($this->LI && $this->OL>0){
-                    $this->Write(5,$this->OL.'. '.$e);
-                    $this->OL++;
-                }
-                elseif($this->FIG){
-                    //do nothing
-                }
-                else
-                    $this->Write(5,$e);
-            }
-            else
-            {
-                // Tag
-                if($e[0]=='/')
-                    $this->CloseTag(strtoupper(substr($e,1)));
                 else
                 {
-                    // Extract attributes
-                    $a2 = explode(' ',$e);
-                    $tag = strtoupper(array_shift($a2));
-                    $attr = array();
-                    foreach($a2 as $v)
+                    // Tag
+                    if($e[0]=='/')
+                        $this->CloseTag(strtoupper(substr($e,1)));
+                    else
                     {
-                        if(preg_match('/([^=]*)=["\']?([^"\']*)/',$v,$a3))
-                            $attr[strtoupper($a3[1])] = $a3[2];
+                        // Extract attributes
+                        $a2 = explode(' ',$e);
+                        $tag = strtoupper(array_shift($a2));
+                        $attr = array();
+                        foreach($a2 as $v)
+                        {
+                            if(preg_match('/([^=]*)=["\']?([^"\']*)/',$v,$a3))
+                                $attr[strtoupper($a3[1])] = $a3[2];
+                        }
+                        $this->OpenTag($tag,$attr);
                     }
-                    $this->OpenTag($tag,$attr);
+                }    
+            }else{
+                if ($e=='br'){
+                    $this->Ln(5);
+                }elseif ($e!='/pre'){
+                   $this->Write(5,$e);
                 }
             }
         }
@@ -240,11 +249,17 @@ class PDF extends FPDF
         if($tag=='FIGCAPTION'){
             $this->FIG = 1;
         }
+        if($tag=='BLOCKQUOTE'){
+            $this->SetLeftMargin(20);
+            $this->SetTextColor(128, 128, 128);
+            $this->SetStyle("I", true);
+            $this->SetFontSize(14);
+            $this->BLOCKQUOTE = 1;
+        }
         if($tag=='PRE'){
             $this->SetFont('Courier');
             $this->SetFontSize(10);
             $this->SetFillColor(211, 211, 211);
-            $this->Ln(8);
             $this->PRE = 1;
         }
     }
@@ -268,11 +283,17 @@ class PDF extends FPDF
         if($tag=='FIGCAPTION'){
             $this->FIG = 0;
         }
+        if($tag=='BLOCKQUOTE'){
+            $this->SetLeftMargin(10);
+            $this->SetTextColor(0, 0, 0);
+            $this->SetFont('Arial', '');
+            $this->SetFontSize(12);
+            $this->BLOCKQUOTE = 0;
+        }
         if($tag=='PRE'){
             $this->SetFont('Arial');
             $this->SetFontSize(12);
             $this->SetFillColor(255, 255, 255);
-            $this->Ln(8);
             $this->PRE = 0;
         }
     }

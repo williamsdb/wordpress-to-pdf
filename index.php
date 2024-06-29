@@ -166,7 +166,8 @@
                         $pdf->SetY(10);
                     }
                 }
-                $html = '<p>'.iconv('UTF-8', 'windows-1252//TRANSLIT', html_entity_decode_exclude_pre($posts[$i]['content']['rendered'])).'<p>';
+
+                $html = '<p>'.iconv('UTF-8', 'windows-1252//TRANSLIT', removeNonWindows1252Chars(html_entity_decode_exclude_pre($posts[$i]['content']['rendered']))).'<p>';
                 $pdf->SetFontSize(12);
                 $pdf->WriteHTML($html);
 
@@ -255,6 +256,18 @@
         }
         
         return $html;
+    }
+
+    function removeNonWindows1252Chars($input) {
+        // Define the valid range for Windows-1252 characters
+        $windows1252 = implode('', array_map('chr', range(0, 255)));
+        
+        // Use a callback function to filter the input string
+        $output = preg_replace_callback('/./u', function ($matches) use ($windows1252) {
+            return strpos($windows1252, $matches[0]) !== false ? $matches[0] : '';
+        }, $input);
+        
+        return $output;
     }
 
 ?>

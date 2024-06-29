@@ -1,3 +1,4 @@
 *.pdf
 .DS_Store
 test.php
+out.txt

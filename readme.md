@@ -109,8 +109,12 @@ _For more information, please refer to the [this blog post](https://www.spokenli
 <!-- ROADMAP -->
 ## Known Issues
 
-- only the featured image is supported, any in the body of the post will be silently dropped
+- only the featured image is supported, any in the body of the post will be silently dropped. Also, videos of any sort are not supported.
 - only simple text formatting is supported (bold, italics and plain text) everything else will look strange
+- only character set Windows-1252 is supported which means any non-English characters and other non-standard characters such as emojis will be dropped
+- WordPress code blocks are only partially supported and have no code formatting.
+
+There are no plans to fix these issues and more likely is a rewrite of the code to support UTF-8. Keep an eye on [my site](https://spokenlikeageek.com) for more information.
 
 See the [open issues](https://github.com/williamsdb/wordpress-to-pdf/issues) for a full list of proposed features (and known issues).
 
